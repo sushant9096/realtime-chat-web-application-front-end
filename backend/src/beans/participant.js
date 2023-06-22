@@ -5,12 +5,14 @@ module.exports = {
         unique: true,
         primaryKey: true,
     },
-    conversionId: {
+    conversationId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: 'conversation_participant'
     },
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        unique: 'conversation_participant'
     }
 }

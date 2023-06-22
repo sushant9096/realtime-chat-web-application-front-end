@@ -1,10 +1,33 @@
 const {catchAsync} = require("../utils");
 const {conversationDAO} = require('../dao');
+const {participantDAO} = require('../dao');
 
 // create a new conversation from conversionDAO
 const createConversation = catchAsync(async (req, res) => {
   const data = req.body;
+  const { participants, type } = data;
+
+  if (!participants) {
+    return res.status(400).send({
+      message: 'Participants are required'
+    });
+  } else if (participants.length < 2 && type === 1) {
+    return res.status(400).send({
+      message: 'At least 2 participants are required'
+    });
+  } else if (participants.length < 1 && type === 0) {
+    return res.status(400).send({
+      message: 'At least 1 participant is required'
+    });
+  }
+
   const conversation = await conversationDAO.createConversation(data);
+  for (let i = 0; i < participants.length; i++) {
+    await participantDAO.createParticipant({
+      conversationId: conversation.id,
+      userId: participants[i]
+    });
+  }
   res.status(201).send(conversation);
 });
 
