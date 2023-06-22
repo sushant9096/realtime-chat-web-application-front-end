@@ -1,11 +1,12 @@
 const {catchAsync} = require("../utils");
 const {conversationDAO} = require('../dao');
 const {participantDAO} = require('../dao');
+const {sequelize} = require("../models");
 
 // create a new conversation from conversionDAO
 const createConversation = catchAsync(async (req, res) => {
   const data = req.body;
-  const { participants, type } = data;
+  const { participants, type = 0 } = data;
 
   if (!participants) {
     return res.status(400).send({
@@ -21,13 +22,17 @@ const createConversation = catchAsync(async (req, res) => {
     });
   }
 
-  const conversation = await conversationDAO.createConversation(data);
-  for (let i = 0; i < participants.length; i++) {
-    await participantDAO.createParticipant({
-      conversationId: conversation.id,
-      userId: participants[i]
-    });
-  }
+  let conversation;
+  await sequelize.transaction(async (t) => {
+    conversation = await conversationDAO.createConversation(data, {transaction: t});
+    for (let i = 0; i < participants.length; i++) {
+      await participantDAO.createParticipant({
+        conversationId: conversation.id,
+        userId: participants[i]
+      }, {transaction: t});
+    }
+    return conversation;
+  });
   res.status(201).send(conversation);
 });
 

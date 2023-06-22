@@ -31,7 +31,7 @@ participant.belongsTo(conversation, {foreignKey: 'conversationId', as: 'conversa
 participant.belongsTo(user, {foreignKey: 'userId', as: 'user'});
 
 sequelize.sync({
-  alter: true
+  // alter: true
 }).then(r => {
   console.log('Database & tables altered!');
 })
