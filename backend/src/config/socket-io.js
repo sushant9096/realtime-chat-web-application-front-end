@@ -1,4 +1,10 @@
 const {Server} = require("socket.io");
-const SocketIO = (exServer) => new Server(exServer);
+class SocketIO {
+    static io;
+
+    static init(exServer) {
+        SocketIO.io = new Server(exServer)
+    };
+}
 
 module.exports = SocketIO;

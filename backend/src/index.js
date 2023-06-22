@@ -1,18 +1,21 @@
 require('dotenv').config()
 const { app } = require("./config");
 const express = require('express');
-const sequelize = require("./models");
+const {sequelize} = require("./models");
 const {createServer} = require("http");
 const expressApp = express();
 const {SocketIO} = require("./config");
 const routes = require("./routes");
+const {errorHandler} = require("./middlewares");
 
 // Express App Configs
 expressApp.use(express.json())
 expressApp.use('/', routes);
+expressApp.use(errorHandler) // Error Handler Middleware
 
 const server = createServer(expressApp);
-SocketIO(server).on('connection', (socket) => {
+SocketIO.init(server);
+SocketIO.io.on('connection', (socket) => {
     console.log('a user connected: ', socket.id);
     socket.on('disconnect', () => {
         console.log('user disconnected');

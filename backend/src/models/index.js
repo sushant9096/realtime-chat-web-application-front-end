@@ -27,4 +27,10 @@ user.belongsTo(participant, {foreignKey: 'userId', as: 'user'});
 message.belongsTo(conversation, {foreignKey: 'conversationId', as: 'conversation'});
 participant.belongsTo(conversation, {foreignKey: 'conversationId', as: 'conversation'});
 
-module.exports = sequelize;
+module.exports = {
+    conversationModel: conversation,
+    messageModel: message,
+    participantModel: participant,
+    userModel: user,
+    sequelize
+};

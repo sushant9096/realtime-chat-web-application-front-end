@@ -2,6 +2,7 @@ const express = require('express');
 const conversationRoute = require('./conversation.route');
 const messageRoute = require('./message.route');
 const participantRoute = require('./participant.route');
+const userRoute = require('./user.route');
 
 const router = express.Router();
 
@@ -17,6 +18,10 @@ const allRoutes = [
     {
         path: '/participant',
         route: participantRoute,
+    },
+    {
+        path: '/user',
+        route: userRoute,
     }
 ]
 
