@@ -5,8 +5,8 @@ const createConversation = async (data) => {
   return conversationModel.create(data);
 }
 
-const findAllConversations = async () => {
-  return conversationModel.findAll();
+const findAllConversations = async (filter) => {
+  return conversationModel.findAll(filter);
 }
 
 const findConversationById = async (id) => {

@@ -33,7 +33,7 @@ participant.belongsTo(user, {foreignKey: 'userId', as: 'user'});
 sequelize.sync({
   // alter: true
 }).then(r => {
-  console.log('Database & tables altered!');
+  console.log('Database & tables synced!');
 })
 
 module.exports = {

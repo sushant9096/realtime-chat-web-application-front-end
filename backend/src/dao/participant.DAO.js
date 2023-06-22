@@ -5,8 +5,8 @@ const createParticipant = async (data) => {
   return participantModel.create(data);
 }
 
-const findAllParticipants = async () => {
-  return participantModel.findAll();
+const findAllParticipants = async (filter) => {
+  return participantModel.findAll(filter);
 }
 
 const findParticipantById = async (id) => {

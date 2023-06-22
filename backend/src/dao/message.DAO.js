@@ -5,8 +5,8 @@ const createMessage = async (data) => {
   return messageModel.create(data);
 }
 
-const findAllMessages = async () => {
-  return messageModel.findAll();
+const findAllMessages = async (filter) => {
+  return messageModel.findAll(filter);
 }
 
 const findMessageById = async (id) => {

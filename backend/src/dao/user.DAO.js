@@ -5,8 +5,8 @@ const createUser = async (data) => {
   return userModel.create(data);
 }
 
-const findAllUsers = async () => {
-  return userModel.findAll();
+const findAllUsers = async (filter) => {
+  return userModel.findAll(filter);
 }
 
 const findUserById = async (id) => {
