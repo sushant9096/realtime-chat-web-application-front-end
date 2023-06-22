@@ -17,9 +17,36 @@ const server = createServer(expressApp);
 SocketIO.init(server);
 SocketIO.io.on('connection', (socket) => {
     console.log('a user connected: ', socket.id);
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-      });
+    socket.on("setup", (userData) => {
+        socket.join(userData.id);
+        console.log(userData.name, "connected");
+    });
+    socket.on("join chat", (room) => {
+        socket.join(room);
+        console.log("User joined room: " + room);
+    });
+    socket.on("new message", (newMessage) => {
+        const chatID = newMessage.conversationId;
+        const chat = {
+            participants: [1,2]
+        };
+        if (!chat.participants) return console.log("chat.participants not defined");
+
+        chat.participants.forEach((userId) => {
+            if (userId === newMessage.senderId) return;
+            socket.in(userId).emit("message received", newMessage);
+        });
+        socket.on("typing", (room) => {
+            socket.in(room).emit("typing");
+        });
+        socket.on("stop typing", (room) => {
+            socket.in(room).emit("stop typing");
+        });
+    });
+    socket.off("setup", (userData) => {
+        console.log("USER DISCONNECTED");
+        socket.leave(userData.id);
+    });
 });
 
 sequelize.authenticate().then(() => {

@@ -1,51 +1,50 @@
-const {messageModel} = require('../models');
 const {catchAsync} = require("../utils");
+const {messageDAO} = require('../dao');
 
-// create a new message (sequelize)
+// create a new message from messageDAO
 const createMessage = catchAsync(async (req, res) => {
   const data = req.body;
-  const newMessage = await messageModel.create(data);
-  res.status(201).send(newMessage);
+  const message = await messageDAO.createMessage(data);
+  res.status(201).send(message);
 });
 
-// find all messages (sequelize)
+// find all messages from messageDAO
 const findAllMessages = catchAsync(async (req, res) => {
-  const messages = await messageModel.findAll();
-  res.status(200).send(messages);
+    const messages = await messageDAO.findAllMessages();
+    res.status(200).send(messages);
+  }
+);
+
+// find a message by id from messageDAO
+const findMessageById = catchAsync(async (req, res) => {
+  const {id} = req.params;
+  const message = await messageDAO.findMessageById(id);
+  if (!message) {
+    return res.sendStatus(404);
+  }
+  res.status(200).send(message);
 });
 
-// find a message by id (sequelize)
-const findMessageById = catchAsync(async (req, res) => {
+// update a message by id from messageDAO
+const updateMessageById = catchAsync(async (req, res) => {
     const {id} = req.params;
-    const message = await messageModel.findByPk(id);
+    const data = req.body;
+    const message = await messageDAO.updateMessageById(id, data);
     if (!message) {
-      res.status(404).send({message: `Message with id: ${id} not found`});
+      return res.sendStatus(404);
     }
     res.status(200).send(message);
   }
 );
 
-// update a message by id (sequelize)
-const updateMessageById = catchAsync(async (req, res) => {
-  const {id} = req.params;
-  const data = req.body;
-  const message = await messageModel.findByPk(id);
-  if (!message) {
-    res.status(404).send({message: `Message with id: ${id} not found`});
-  }
-  const updatedMessage = await message.update(data);
-  res.status(200).send(updatedMessage);
-});
-
-// delete a message by id (sequelize)
+// delete a message by id from messageDAO
 const deleteMessageById = catchAsync(async (req, res) => {
   const {id} = req.params;
-  const message = await messageModel.findByPk(id);
+  const message = await messageDAO.deleteMessageById(id);
   if (!message) {
-    res.status(404).send({message: `Message with id: ${id} not found`});
+    return res.sendStatus(404);
   }
-  await message.destroy();
-  res.status(204).send();
+  res.sendStatus(204);
 });
 
 module.exports = {
