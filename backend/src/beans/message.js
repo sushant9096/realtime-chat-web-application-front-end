@@ -5,6 +5,7 @@ module.exports = {
         type: DataTypes.INTEGER,
         unique: true,
         primaryKey: true,
+        autoIncrement: true
     },
     conversationId: {
         type: DataTypes.INTEGER,

@@ -4,6 +4,7 @@ module.exports = {
         type: DataTypes.INTEGER,
         unique: true,
         primaryKey: true,
+        autoIncrement: true
     },
     type: {
         type: DataTypes.INTEGER,

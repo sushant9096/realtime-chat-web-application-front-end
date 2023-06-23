@@ -1,8 +1,8 @@
 // define DAO methods for participant
 const {participantModel} = require('../models');
 
-const createParticipant = async (data) => {
-  return participantModel.create(data);
+const createParticipant = async (data, options) => {
+  return participantModel.create(data, options);
 }
 
 const findAllParticipants = async (filter) => {

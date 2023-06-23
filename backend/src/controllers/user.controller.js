@@ -24,6 +24,26 @@ const findUserById = catchAsync(async (req, res) => {
   res.status(200).send(user);
 });
 
+// find a user by email or first name or last name from userDAO
+const findUserByEmailOrFirstNameOrLastName = catchAsync(async (req, res) => {
+  const {email = ' ', firstName = ' ', lastName = ' '} = req.query;
+  const user = await userDAO.findUserByKeyword(email, firstName, lastName);
+  if (!user) {
+    return res.sendStatus(404);
+  }
+  res.status(200).send(user);
+});
+
+// find a user by firebase uid from userDAO
+const findUserByFirebaseUid = catchAsync(async (req, res) => {
+  const {uid} = req.params;
+  const user = await userDAO.findUserByFirebaseUid(uid);
+  if (!user) {
+    return res.sendStatus(404);
+  }
+  res.status(200).send(user);
+});
+
 // update a user by id from userDAO
 const updateUserById = catchAsync(async (req, res) => {
   const {id} = req.params;
@@ -50,6 +70,8 @@ module.exports = {
   createUser,
   findAllUsers,
   findUserById,
+  findUserByEmailOrFirstNameOrLastName,
+  findUserByFirebaseUid,
   updateUserById,
   deleteUserById
 }

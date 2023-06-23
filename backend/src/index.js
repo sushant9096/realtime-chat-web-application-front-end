@@ -1,4 +1,5 @@
 require('dotenv').config()
+const cors = require('cors');
 const { app } = require("./config");
 const express = require('express');
 const {sequelize} = require("./models");
@@ -11,6 +12,7 @@ const {participantDAO} = require("./dao");
 const {auth} = require("./config/firebase-config");
 
 // Express App Configs
+expressApp.use(cors());
 expressApp.use(express.json())
 expressApp.use('/', authMiddleware, routes);
 expressApp.use(errorHandler) // Error Handler Middleware
@@ -27,6 +29,8 @@ function initSocketIO() {
         }
         try {
             const {uid} = await auth.verifyIdToken(token);
+            console.log("Socket: Authenticated: ", uid);
+            socket.emit('connected')
             next();
         } catch (e) {
             // console.error(e);
@@ -45,13 +49,15 @@ function initSocketIO() {
             console.log("User joined conversation: " + conversationID);
         });
         socket.on("new message", async (newMessage) => {
+            // console.log("new message: ", newMessage)
             const chatID = newMessage.conversationId;
             const participants = await participantDAO.findAllParticipants({where: {conversationId: chatID}});
             if (!participants) return console.log("participants not defined");
-
-            participants.forEach((userId) => {
-                if (userId === newMessage.senderId) return;
-                socket.in(userId).emit("message received", newMessage);
+            participants.forEach((userModel) => {
+                const user = userModel.get({plain: true});
+                if (user.id === newMessage.senderId) return;
+                // console.log('sending message to: ', user);
+                socket.in(chatID).emit("message received", newMessage);
             });
             socket.on("typing", (room) => {
                 socket.in(room).emit("typing", {conversationId: room});

@@ -20,15 +20,16 @@ for (let modelDefiner of modelDefiners) {
 
 const {conversation, message, participant, user} = sequelize.models;
 
-conversation.hasMany(participant, {as: 'participant'});
-conversation.hasMany(message, {as: 'message'});
+conversation.belongsToMany(user, { through: participant });
+conversation.hasMany(participant);
+conversation.hasMany(message);
 
-user.hasMany(participant, {as: 'participant'});
+user.belongsToMany(conversation, { through: participant });
 
-message.belongsTo(conversation, {foreignKey: 'conversationId', as: 'conversation'});
+message.belongsTo(conversation);
 
-participant.belongsTo(conversation, {foreignKey: 'conversationId', as: 'conversation'});
-participant.belongsTo(user, {foreignKey: 'userId', as: 'user'});
+participant.belongsTo(conversation);
+participant.belongsTo(user);
 
 sequelize.sync({
   // alter: true

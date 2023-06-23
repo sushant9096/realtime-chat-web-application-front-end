@@ -1,8 +1,8 @@
 // define DAO methods for conversation
 const {conversationModel} = require('../models');
 
-const createConversation = async (data) => {
-  return conversationModel.create(data);
+const createConversation = async (data, options) => {
+  return conversationModel.create(data, options);
 }
 
 const findAllConversations = async (filter) => {

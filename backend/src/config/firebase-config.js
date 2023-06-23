@@ -3,7 +3,7 @@ const {getAuth} = require("firebase-admin/auth");
 const {resolve} = require("path");
 
 const firebaseApp = initializeApp({
-    credential: cert(resolve('realtimechatwebapplication-firebase-adminsdk-kc4hx-08408de863.json')),
+    credential: cert(resolve(process.env.FIREBASE_CREDENTIALS_PATH)),
 });
 
 const auth = getAuth(firebaseApp);

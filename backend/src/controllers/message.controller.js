@@ -10,6 +10,16 @@ const createMessage = catchAsync(async (req, res) => {
 
 // find all messages from messageDAO
 const findAllMessages = catchAsync(async (req, res) => {
+    if (req?.query?.conversationId) {
+      const {conversationId} = req.query;
+      const messages = await messageDAO.findAllMessages({
+        where: {
+          conversationId
+        },
+      });
+      res.status(200).send(messages);
+      return;
+    }
     const messages = await messageDAO.findAllMessages();
     res.status(200).send(messages);
   }

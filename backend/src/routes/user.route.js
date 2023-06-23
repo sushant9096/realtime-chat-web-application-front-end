@@ -9,6 +9,12 @@ router.post('/', userController.createUser);
 // generate Read route for User
 router.get('/', userController.findAllUsers);
 
+// generate Read route for User by keyword
+router.get('/search', userController.findUserByEmailOrFirstNameOrLastName);
+
+// generate Read route for User by firebase uid
+router.get('/firebase/:uid', userController.findUserByFirebaseUid);
+
 // generate Read route for User by id
 router.get('/:id', userController.findUserById);
 

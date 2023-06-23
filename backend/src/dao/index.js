@@ -1,10 +1,10 @@
-const conversionDAO = require('./conversation.DAO');
+const conversationDAO = require('./conversation.DAO');
 const messageDAO = require('./message.DAO');
 const participantDAO = require('./participant.DAO');
 const userDAO = require('./user.DAO');
 
 module.exports = {
-  conversionDAO,
+  conversationDAO,
   messageDAO,
   participantDAO,
   userDAO

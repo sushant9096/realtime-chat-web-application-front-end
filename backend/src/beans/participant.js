@@ -4,15 +4,14 @@ module.exports = {
         type: DataTypes.INTEGER,
         unique: true,
         primaryKey: true,
+        autoIncrement: true
     },
     conversationId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: 'conversation_participant'
     },
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        unique: 'conversation_participant'
     }
 }

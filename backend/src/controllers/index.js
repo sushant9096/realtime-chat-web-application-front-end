@@ -1,4 +1,4 @@
-const conversionController = require('./conversion.controller');
+const conversionController = require('./conversation.controller');
 const messageController = require('./message.controller');
 const participantController = require('./participant.controller');
 const userController = require('./user.controller');
