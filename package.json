@@ -20,6 +20,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "firbase_login": "firebase login",
+    "firbase_init": "firebase init",
+    "firebase_deploy": "firebase deploy",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

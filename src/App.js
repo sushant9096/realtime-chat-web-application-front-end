@@ -7,7 +7,7 @@ import {firebaseAuth} from "./config/firebase";
 import {GoogleAuthProvider, onAuthStateChanged} from "firebase/auth";
 import {Box, Paper, Typography} from "@mui/material";
 import ChatHome from "./components/ChatHome/ChatHome";
-import api from "./config/api";
+import api, {api_url} from "./config/api";
 import catchAsyncAPI from "./utils/catchAsyncAPI";
 import io from "socket.io-client";
 
@@ -54,7 +54,7 @@ function App() {
               config.headers.Authorization =  token ? `Bearer ${token}` : '';
               return config;
             });
-            socket = io('http://localhost:8000', {
+            socket = io(api_url, {
               auth: {
                 token: idToken
               }
