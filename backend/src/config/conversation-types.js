@@ -1,6 +1,0 @@
-const CONVERSATION_TYPES = {
-    INDIVIDUAL: 0,
-    GROUP: 1,
-}
-
-module.exports = CONVERSATION_TYPES;
