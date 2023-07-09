@@ -16,13 +16,15 @@ function ChatHome(props) {
   const [selectedConversation, setSelectedConversation] = React.useState(null)
   const firstAPICall = React.useRef(false);
   const [messageTxt, setMessageTxt] = React.useState('')
+  const [selectedConversationTitle, setSelectedConversationTitle] = React.useState('');
+  const [selectedConversationEmail, setSelectedConversationEmail] = React.useState('');
 
   async function createConversation(receiverId) {
     const requestConfig = {
       url: '/conversation',
       method: 'post',
       data: {
-        participants: [authenticatedUser.id, receiverId],
+        participants: [authenticatedUser.userId, receiverId],
         type: 0
       }
     }
@@ -56,10 +58,19 @@ function ChatHome(props) {
   }
 
   const updateConversionsList = (conversations) => {
-    conversations?.forEach(conversation => {
-      socket.emit('join chat', conversation.id)
+    /*for (const conversation of conversations) {
+      console.log('connecting to conversation [socket]: ', conversation.conversationId)
+      socket.emit('join chat', conversation.conversationId)
+    }*/
+    setConversations(prevState => {
+      prevState = conversations.map(conversation => {
+        return {
+          ...conversation,
+          ...generateConversionDetails(conversation)
+        }
+      });
+      return prevState;
     });
-    setConversations(conversations)
   }
 
   function clearSearchResults() {
@@ -67,17 +78,22 @@ function ChatHome(props) {
     setConversionSearchTxt('')
   }
 
-  function generateConversionTitle(conversation) {
+  function generateConversionDetails(conversation) {
     // console.log('generateConversionTitle: \n', conversation)
     /*const participants = conversation?.participant?.filter(participant => participant?.userId !== authenticatedUser?.id);
     if (participants[0]) {
       return participants[0]?.user?.firstName + ' ' + participants[0]?.user?.lastName
     }*/
-    const user = conversation?.users?.find(user => user?.id !== authenticatedUser?.id);
+    const user = conversation?.users?.find(user => user?.userId !== authenticatedUser?.userId);
+    const details = {
+      title: 'No Name',
+      email: 'No Email',
+    };
     if (user) {
-      return user?.firstName + ' ' + user?.lastName
+      details.title = user?.firstName + ' ' + user?.lastName
+      details.email = user?.email
     }
-    return 'No Name'
+    return details;
   }
 
   function refreshConversations() {
@@ -106,8 +122,8 @@ function ChatHome(props) {
         url: '/message',
         method: 'post',
         data: {
-          conversationId: conversations[selectedConversation]?.id,
-          senderId: authenticatedUser?.id,
+          conversationId: conversations[selectedConversation]?.conversationId,
+          senderId: authenticatedUser?.userId,
           content: messageTxt
         }
       }
@@ -131,21 +147,18 @@ function ChatHome(props) {
     }
   }
 
+  function handleSelectConversation(index) {
+    console.log('connecting to conversation [socket]: ', conversations[index].conversationId)
+    socket.emit('join chat', conversations[index].conversationId)
+    setSelectedConversation(index);
+    setSelectedConversationTitle(conversations[index]?.title);
+    setSelectedConversationEmail(conversations[index]?.email);
+  }
+
   React.useEffect(() => {
     if (!firstAPICall.current) {
       firstAPICall.current = true;
       refreshConversations();
-      socket.on('message received', (message) => {
-        // console.log('message received:\n', message)
-        setMessages(prevState => {
-          // console.log('prevState:\n', prevState)
-          if (!prevState.find(msg => msg.id === message.id)) {
-            // console.log('new message')
-            prevState = [...prevState, message];
-          }
-          return prevState;
-        })
-      });
     }
   }, [])
 
@@ -164,8 +177,8 @@ function ChatHome(props) {
         response => {
           if (Array?.isArray(response?.data)) {
             console.log(response?.data)
-            console.log(authenticatedUser?.id)
-            updateSearchResults(response?.data?.filter(user => user?.id !== authenticatedUser?.id))
+            console.log(authenticatedUser?.userId)
+            updateSearchResults(response?.data?.filter(user => user?.userId !== authenticatedUser?.userId))
           }
         },
         error => {
@@ -177,8 +190,19 @@ function ChatHome(props) {
 
   React.useEffect(() => {
     if (selectedConversation !== null) {
+      socket.on('message received', (message) => {
+        console.log('message received:\n', message)
+        setMessages(prevState => {
+          // console.log('prevState:\n', prevState)
+          if (!prevState.find(msg => msg.id === message.id)) {
+            // console.log('new message')
+            prevState = [...prevState, message];
+          }
+          return prevState;
+        })
+      });
       const requestConfig = {
-        url: '/message?conversationId=' + conversations[selectedConversation]?.id,
+        url: '/message?conversationId=' + conversations[selectedConversation]?.conversationId,
       }
       catchAsyncAPI(
         api(requestConfig),
@@ -201,162 +225,171 @@ function ChatHome(props) {
       container
       direction="row"
       spacing={1}
+      height={"100%"}
     >
       <Grid
         item
+        xs={12}
         md={3}
         px={1}
-        style={{
-          height: '80vh',
-        }}
       >
-        <TextField
-          style={{
-            marginBottom: 5,
-          }}
-          label={"Chats"}
-          variant={"filled"}
-          value={conversionSearchTxt}
-          onChange={(event) => {
-            setConversionSearchTxt(event.target.value)
-          }}
-          InputProps={{
-            endAdornment: <InputAdornment position="end">
-              <IconButton
-                color={"primary"}>
-                <Search/>
-              </IconButton>
-            </InputAdornment>
-          }}
-          fullWidth
-        />
-        <Paper
-          className={"scrollbar1"}
-          style={{
-            overflowY: 'scroll',
-            height: '100%',
-            padding: "5px 5px"
-          }}
+        <Stack
+          height={"100%"}
         >
-          <Stack
-            spacing={1}
-            direction="column"
-            divider={<hr color={"#939393"}/>}
-          >
-            <Stack
-              direction="row"
-              justifyContent={"space-between"}
-            >
-              <Typography
-                variant={'h6'}>
-                {
-                  conversionSearchResults?.length > 0 ? 'Search Results' : 'Conversations'
-                }
-              </Typography>
-              {
-                conversionSearchResults?.length > 0 ?
-                  <IconButton
-                    onClick={clearSearchResults}
-                  >
-                    <Cancel/>
-                  </IconButton>
-                  :
-                  <IconButton
-                    onClick={refreshConversations}
-                  >
-                    <Refresh/>
-                  </IconButton>
-              }
-            </Stack>
-            {
-              conversionSearchResults.length === 0 && conversations?.map((conversation, index) => {
-                return (
-                  <ConversionTile
-                    selectConversation={() => setSelectedConversation(index)}
-                    selected={selectedConversation === index}
-                    key={conversation.id}
-                    title={generateConversionTitle(conversation)}
-                  />
-                )
-              })
-            }
-            {
-              conversionSearchResults?.map((user) =>
-                <ChatSearchTile
-                  key={user.id}
-                  {...user}
-                  createConversation={() => createConversation(user.id)}
-                />
-              )
-            }
-          </Stack>
-        </Paper>
-      </Grid>
-      <Grid
-        item
-        md={9}
-        style={{
-          height: '80vh',
-        }}
-      >
-        <Typography
-          style={{
-            background: "transparent",
-            padding: '2px',
-            marginBottom: '5px'
-          }}
-          color={"black"}
-          variant={"h6"}
-        >
-          Chat Name
-        </Typography>
-        <Paper
-          className={"scrollbar1"}
-          style={{
-            background: "transparent",
-            overflowY: 'scroll',
-            height: '90%',
-            padding: "10px 5px"
-          }}
-        >
-          <Stack
-            spacing={1}
-            direction="column"
-          >
-            {
-              messages.map((message) => <MessageTile
-                authenticatedUser={authenticatedUser}
-                key={message.id}
-                message={message}
-              />)
-            }
-          </Stack>
-        </Paper>
-        {
-          selectedConversation !== null &&
           <TextField
-            value={messageTxt}
-            onChange={(event) => {
-              setMessageTxt(event.target.value)
-            }}
             style={{
-              marginTop: 5,
+              marginBottom: 5,
             }}
-            label={"Send Message"}
+            label={"Chats"}
             variant={"filled"}
+            value={conversionSearchTxt}
+            onChange={(event) => {
+              setConversionSearchTxt(event.target.value)
+            }}
             InputProps={{
               endAdornment: <InputAdornment position="end">
                 <IconButton
-                  onClick={sendMessage}
-                  color={"primary"}
-                >
-                  <Send/>
+                  color={"primary"}>
+                  <Search/>
                 </IconButton>
               </InputAdornment>
             }}
             fullWidth
           />
-        }
+          <Paper
+            className={"scrollbar1"}
+            style={{
+              overflowY: 'scroll',
+              height: '100%',
+              padding: "5px"
+            }}
+          >
+            <Stack
+              spacing={1}
+              direction="column"
+              divider={<hr color={"#939393"}/>}
+            >
+              <Stack
+                direction="row"
+                justifyContent={"space-between"}
+              >
+                <Typography
+                  variant={'h6'}>
+                  {
+                    conversionSearchResults?.length > 0 ? 'Search Results' : 'Conversations'
+                  }
+                </Typography>
+                {
+                  conversionSearchResults?.length > 0 ?
+                    <IconButton
+                      onClick={clearSearchResults}
+                    >
+                      <Cancel/>
+                    </IconButton>
+                    :
+                    <IconButton
+                      onClick={refreshConversations}
+                    >
+                      <Refresh/>
+                    </IconButton>
+                }
+              </Stack>
+              {
+                conversionSearchResults.length === 0 && conversations?.map((conversation, index) => {
+                  return (
+                    <ConversionTile
+                      selectConversation={() => handleSelectConversation(index, conversation)}
+                      selected={selectedConversation === index}
+                      key={conversation.conversationId}
+                      {...conversation}
+                    />
+                  )
+                })
+              }
+              {
+                conversionSearchResults?.map((user) =>
+                  <ChatSearchTile
+                    key={user.userId}
+                    {...user}
+                    createConversation={() => createConversation(user.userId)}
+                  />
+                )
+              }
+            </Stack>
+          </Paper>
+        </Stack>
+      </Grid>
+      <Grid
+        flexGrow={1}
+        item
+        xs={12}
+        md={9}
+        px={1}
+      >
+        <Stack
+          height={"100%"}
+        >
+          <Typography
+            style={{
+              background: "rgb(247,247,247)",
+              padding: '2px',
+              marginBottom: '5px'
+            }}
+            color={"black"}
+            variant={"h6"}
+          >
+            {selectedConversationTitle}
+          </Typography>
+          <div
+            className={"scrollbar1"}
+            style={{
+              background: "rgb(247,247,247)",
+              overflowY: 'scroll',
+              height: '90%',
+              padding: "10px 5px",
+              // border: "1px solid #939393",
+              // borderRadius: "5px"
+            }}
+          >
+            <Stack
+              spacing={1}
+              direction="column"
+            >
+              {
+                messages.map((message) => <MessageTile
+                  authenticatedUser={authenticatedUser}
+                  key={message.messageId}
+                  message={message}
+                />)
+              }
+            </Stack>
+          </div>
+          {
+            selectedConversation !== null &&
+            <TextField
+              value={messageTxt}
+              onChange={(event) => {
+                setMessageTxt(event.target.value)
+              }}
+              style={{
+                marginTop: 5,
+              }}
+              label={"Send Message"}
+              variant={"filled"}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">
+                  <IconButton
+                    onClick={sendMessage}
+                    color={"primary"}
+                  >
+                    <Send/>
+                  </IconButton>
+                </InputAdornment>
+              }}
+              fullWidth
+            />
+          }
+        </Stack>
       </Grid>
     </Grid>
   )

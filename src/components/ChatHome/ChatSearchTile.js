@@ -1,25 +1,38 @@
 import React from 'react';
 import {Chat} from "@mui/icons-material";
-import {IconButton, Stack, Typography} from "@mui/material";
+import {Grid, IconButton, Stack, Typography} from "@mui/material";
 
-function ChatSearchTile({ id, firstName, lastName, createConversation }) {
+function ChatSearchTile({ id, firstName, lastName, createConversation, email }) {
   return (
-    <Stack
+    <Grid
+      container
       direction={"row"}
       justifyContent={"space-between"}
       alignItems={"center"}
     >
-      <Typography
-        variant={'body1'}>
-        {firstName + ' ' + lastName}
-      </Typography>
+      <Grid
+        item>
+        <Stack>
+          <Typography
+            variant={'body1'}>
+            {firstName + ' ' + lastName}
+          </Typography>
+          <Typography
+            variant={'caption'}>
+            {email}
+          </Typography>
+        </Stack>
+      </Grid>
+      <Grid
+        item>
       <IconButton
         color={"primary"}
         onClick={createConversation}
       >
         <Chat/>
       </IconButton>
-    </Stack>
+      </Grid>
+    </Grid>
   );
 }
 

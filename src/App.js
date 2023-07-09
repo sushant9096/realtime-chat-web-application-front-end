@@ -5,19 +5,18 @@ import {useEffect, useRef, useState} from "react";
 import {auth as FirebaseUIAuth} from "firebaseui";
 import {firebaseAuth} from "./config/firebase";
 import {GoogleAuthProvider, onAuthStateChanged} from "firebase/auth";
-import {Box, Paper, Typography} from "@mui/material";
+import {Box, Grid, Paper, Typography} from "@mui/material";
 import ChatHome from "./components/ChatHome/ChatHome";
 import api, {api_url} from "./config/api";
 import catchAsyncAPI from "./utils/catchAsyncAPI";
 import io from "socket.io-client";
-
-let socket;
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [firebaseUID, setFirebaseUID] = useState('');
   const [authenticatedUser, setAuthenticatedUser] = useState('');
   const firstAPICall = useRef(false);
+  const socket = useRef(null);
 
   function getAuthenticatedUserByFirebaseUID(firebaseUID) {
     return new Promise(resolve => {
@@ -54,16 +53,19 @@ function App() {
               config.headers.Authorization =  token ? `Bearer ${token}` : '';
               return config;
             });
-            socket = io(api_url, {
-              auth: {
-                token: idToken
-              }
-            });
-            socket.on('connected', async () => {
-              const authUserProfile = await getAuthenticatedUserByFirebaseUID(user.uid);
-              setAuthenticatedUser(authUserProfile);
-              setAuthenticated(true);
-            });
+            if (socket.current === null) {
+              console.error('socket.current === null')
+              socket.current = io(api_url, {
+                auth: {
+                  token: idToken
+                }
+              });
+              socket.current.on('connected', async () => {
+                const authUserProfile = await getAuthenticatedUserByFirebaseUID(user.uid);
+                setAuthenticatedUser(authUserProfile);
+                setAuthenticated(true);
+              });
+            }
           }).catch((error) => {
             console.log(error)
           });
@@ -121,46 +123,59 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <MuiAppBar
-        signOutUser={signOutUser}
-        authenticated={authenticated}
-      />
-      {
-        authenticated ?
-          <ChatHome
-            socket={socket}
-            firebaseUID={firebaseUID}
-            authenticatedUser={authenticatedUser}
-          />
-          :
-          <Box
-            display={'flex'}
-            maxWidth={500}
-            height={"100%"}
-            mx={'auto'}
-            mt={10}
-            flexDirection={'column'}
-          >
-            <Paper
-              elevation={24}
-              style={{flexGrow: 1, background: 'transparent'}}
+    <Grid
+      container
+      className="App"
+      direction={"column"}
+      style={{height: '100%'}}
+    >
+      <Grid
+        item
+      >
+        <MuiAppBar
+          signOutUser={signOutUser}
+          authenticated={authenticated}
+        />
+      </Grid>
+      <Grid
+        item
+        style={{flexGrow: 1}}
+      >
+        {
+          authenticated ?
+            <ChatHome
+              socket={socket.current}
+              firebaseUID={firebaseUID}
+              authenticatedUser={authenticatedUser}
+            />
+            :
+            <Box
+              display={'flex'}
+              maxWidth={500}
+              mx={'auto'}
+              mt={10}
+              flexDirection={'column'}
             >
-              <Typography
-                color={"darkblue"}
-                variant="subtitle1"
-                textAlign={"center"}
-                style={{fontWeight: 900}}
-                p={5}
+              <Paper
+                elevation={24}
+                style={{flexGrow: 1, background: 'transparent'}}
               >
-                Experience the thrill of instant connections:<br/>
-                Join our real-time chat community with just a click of 'Continue with Google'
-              </Typography>
-              <FirebaseUIContainer />
-            </Paper>
-          </Box>
-      }
-    </div>
+                <Typography
+                  color={"darkblue"}
+                  variant="subtitle1"
+                  textAlign={"center"}
+                  style={{fontWeight: 900}}
+                  p={5}
+                >
+                  Experience the thrill of instant connections:<br/>
+                  Join our real-time chat community with just a click of 'Continue with Google'
+                </Typography>
+                <FirebaseUIContainer />
+              </Paper>
+            </Box>
+        }
+      </Grid>
+    </Grid>
   );
 }
 

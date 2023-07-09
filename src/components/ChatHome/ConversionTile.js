@@ -1,21 +1,30 @@
 import React from 'react';
-import {Typography} from "@mui/material";
+import {Stack, Typography} from "@mui/material";
 
-function ConversionTile({title, selected, selectConversation}) {
+function ConversionTile({title, email, selected, selectConversation}) {
   return (
-    <Typography
-      fontWeight={"bolder"}
-      color={"darkslategray"}
-      variant={"subtitle1"}
+    <Stack
       style={{
-        background: selected ? 'lightblue' : 'transparent',
-        cursor: 'pointer',
+        background: selected ? 'rgba(0,200,255,0.20)' : 'transparent',
         padding: '2px',
+        cursor: 'pointer',
+        borderRadius: '5px',
       }}
       onClick={selectConversation}
     >
-      {title}
-    </Typography>
+      <Typography
+        fontWeight={"bolder"}
+        color={"darkslategray"}
+        variant={"subtitle1"}
+      >
+        {title}
+      </Typography>
+      <Typography
+        variant={"caption"}
+      >
+        {email}
+      </Typography>
+    </Stack>
   )
 }
 

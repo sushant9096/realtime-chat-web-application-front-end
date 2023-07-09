@@ -1,12 +1,12 @@
 import React, {useEffect} from 'react';
-import {Paper} from "@mui/material";
+import {Paper, Stack, Typography} from "@mui/material";
 
 function MessageTile({message, authenticatedUser}) {
   const {content, senderId} = message;
   const [senderName, setSenderName] = React.useState("");
 
   useEffect(() => {
-    if (senderId === authenticatedUser?.id) {
+    if (senderId === authenticatedUser?.userId) {
       setSenderName("You");
     } else {
       setSenderName("Other");
@@ -15,16 +15,24 @@ function MessageTile({message, authenticatedUser}) {
 
   return (
     <Paper
+      variant={"elevation"}
+      elevation={0.5}
       style={{
-        alignSelf: senderId === authenticatedUser?.id ? 'flex-end' : 'flex-start',
-        width: '49%',
-        padding: 2,
-        background: senderId === authenticatedUser?.id ? '#FFFDE7' : 'rgba(178,232,255,0.22)',
+        alignSelf: senderId === authenticatedUser?.userId ? 'flex-end' : 'flex-start',
+        width: '40%',
+        padding: 5,
+        background: senderId === authenticatedUser?.userId ? '#d7f9d1' : 'rgb(255,255,255)',
+        color: '#000000'
       }}
-      variant={"outlined"}
     >
-      <div style={{fontSize: 18, color: 'darkgray', fontWeight: 900}}>{senderName}</div>
-      {content}
+      {/*<div style={{fontSize: 18, color: 'darkgray', fontWeight: 900}}>{senderName}</div>*/}
+      <Stack>
+        <Typography
+          variant={"body1"}
+        >
+          {content}
+        </Typography>
+      </Stack>
     </Paper>
   );
 }
