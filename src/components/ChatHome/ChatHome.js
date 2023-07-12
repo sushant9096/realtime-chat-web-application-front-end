@@ -1,5 +1,5 @@
 import React from 'react';
-import {Grid, IconButton, InputAdornment, Paper, Stack, TextField, Typography} from "@mui/material";
+import {Grid, IconButton, InputAdornment, Paper, Stack, TextField, Typography, useTheme} from "@mui/material";
 import {Cancel, Refresh, Search, Send} from "@mui/icons-material";
 import ConversionTile from "./ConversionTile";
 import MessageTile from "./MessageTile";
@@ -8,6 +8,7 @@ import catchAsyncAPI from "../../utils/catchAsyncAPI";
 import ChatSearchTile from "./ChatSearchTile";
 
 function ChatHome(props) {
+  const theme = useTheme();
   const {authenticatedUser, socket} = props;
   const [messages, setMessages] = React.useState([])
   const [conversations, setConversations] = React.useState([])
@@ -148,8 +149,6 @@ function ChatHome(props) {
   }
 
   function handleSelectConversation(index) {
-    console.log('connecting to conversation [socket]: ', conversations[index].conversationId)
-    socket.emit('join chat', conversations[index].conversationId)
     setSelectedConversation(index);
     setSelectedConversationTitle(conversations[index]?.title);
     setSelectedConversationEmail(conversations[index]?.email);
@@ -190,12 +189,16 @@ function ChatHome(props) {
 
   React.useEffect(() => {
     if (selectedConversation !== null) {
+      console.log('connecting to conversation [socket]: ', conversations[selectedConversation].conversationId)
+      socket.emit('join chat', conversations[selectedConversation].conversationId)
       socket.on('message received', (message) => {
         console.log('message received:\n', message)
         setMessages(prevState => {
           // console.log('prevState:\n', prevState)
-          if (!prevState.find(msg => msg.id === message.id)) {
-            // console.log('new message')
+          if (!prevState || prevState.length === 0) {
+            prevState = [message];
+          } else if (!prevState.includes(message)) {
+            console.log('new message')
             prevState = [...prevState, message];
           }
           return prevState;
@@ -217,6 +220,13 @@ function ChatHome(props) {
         }
       );
     }
+    return () => {
+      if (selectedConversation !== null) {
+        console.log('disconnecting from conversation [socket]: ', conversations[selectedConversation]?.conversationId)
+        socket.emit('leave chat', conversations[selectedConversation]?.conversationId)
+        socket.off('message received');
+      }
+    }
   }, [selectedConversation])
 
   return (
@@ -225,75 +235,86 @@ function ChatHome(props) {
       container
       direction="row"
       spacing={1}
-      height={"100%"}
+      height={`calc(100% - ${theme.mixins.toolbar.minHeight}px - ${theme.spacing(2)})`}
     >
       <Grid
         item
         xs={12}
         md={3}
         px={1}
+        component={Stack}
+        direction={"column"}
       >
+        <TextField
+          style={{
+            marginBottom: 5,
+          }}
+          label={"Chats"}
+          variant={"filled"}
+          value={conversionSearchTxt}
+          onChange={(event) => {
+            setConversionSearchTxt(event.target.value)
+          }}
+          InputProps={{
+            endAdornment: <InputAdornment position="end">
+              <IconButton
+                color={"primary"}>
+                <Search/>
+              </IconButton>
+            </InputAdornment>
+          }}
+          fullWidth
+        />
         <Stack
-          height={"100%"}
+          direction="row"
+          justifyContent={"space-between"}
         >
-          <TextField
+          <Typography
+            variant={'h6'}>
+            {
+              conversionSearchResults?.length > 0 ? 'Search Results' : 'Conversations'
+            }
+          </Typography>
+          {
+            conversionSearchResults?.length > 0 ?
+              <IconButton
+                onClick={clearSearchResults}
+              >
+                <Cancel/>
+              </IconButton>
+              :
+              <IconButton
+                onClick={refreshConversations}
+              >
+                <Refresh/>
+              </IconButton>
+          }
+        </Stack>
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            flexDirection: "column",
+            padding: "5px",
+          }}
+        >
+          <div
             style={{
-              marginBottom: 5,
-            }}
-            label={"Chats"}
-            variant={"filled"}
-            value={conversionSearchTxt}
-            onChange={(event) => {
-              setConversionSearchTxt(event.target.value)
-            }}
-            InputProps={{
-              endAdornment: <InputAdornment position="end">
-                <IconButton
-                  color={"primary"}>
-                  <Search/>
-                </IconButton>
-              </InputAdornment>
-            }}
-            fullWidth
-          />
-          <Paper
-            className={"scrollbar1"}
-            style={{
-              overflowY: 'scroll',
-              height: '100%',
-              padding: "5px"
+              position: "relative",
+              flex: 1,
             }}
           >
-            <Stack
-              spacing={1}
-              direction="column"
-              divider={<hr color={"#939393"}/>}
+            <div
+              className={"scrollbar1"}
+              style={{
+                overflowY: "scroll",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
             >
-              <Stack
-                direction="row"
-                justifyContent={"space-between"}
-              >
-                <Typography
-                  variant={'h6'}>
-                  {
-                    conversionSearchResults?.length > 0 ? 'Search Results' : 'Conversations'
-                  }
-                </Typography>
-                {
-                  conversionSearchResults?.length > 0 ?
-                    <IconButton
-                      onClick={clearSearchResults}
-                    >
-                      <Cancel/>
-                    </IconButton>
-                    :
-                    <IconButton
-                      onClick={refreshConversations}
-                    >
-                      <Refresh/>
-                    </IconButton>
-                }
-              </Stack>
               {
                 conversionSearchResults.length === 0 && conversations?.map((conversation, index) => {
                   return (
@@ -315,81 +336,79 @@ function ChatHome(props) {
                   />
                 )
               }
-            </Stack>
-          </Paper>
-        </Stack>
+            </div>
+
+          </div>
+        </div>
       </Grid>
       <Grid
-        flexGrow={1}
         item
         xs={12}
         md={9}
-        px={1}
+        component={Stack}
+        direction={"column"}
+        maxHeight={`calc(100% - ${theme.spacing(1)})`}
       >
-        <Stack
-          height={"100%"}
+        <Typography
+          style={{
+            background: "rgb(247,247,247)",
+            padding: '2px',
+            marginBottom: '5px'
+          }}
+          color={"black"}
+          variant={"h6"}
         >
-          <Typography
-            style={{
-              background: "rgb(247,247,247)",
-              padding: '2px',
-              marginBottom: '5px'
-            }}
-            color={"black"}
-            variant={"h6"}
+          {selectedConversationTitle}
+        </Typography>
+        <div
+          className={"scrollbar1"}
+          style={{
+            flexGrow: 1,
+            background: "rgb(247,247,247)",
+            overflowY: 'scroll',
+            padding: "10px 5px",
+            // border: "1px solid #939393",
+            // borderRadius: "5px"
+          }}
+        >
+          <Stack
+            spacing={1}
+            direction="column"
           >
-            {selectedConversationTitle}
-          </Typography>
-          <div
-            className={"scrollbar1"}
-            style={{
-              background: "rgb(247,247,247)",
-              overflowY: 'scroll',
-              height: '90%',
-              padding: "10px 5px",
-              // border: "1px solid #939393",
-              // borderRadius: "5px"
+            {
+              messages.map((message) => <MessageTile
+                authenticatedUser={authenticatedUser}
+                key={message.messageId}
+                message={message}
+              />)
+            }
+          </Stack>
+        </div>
+        {
+          selectedConversation !== null &&
+          <TextField
+            value={messageTxt}
+            onChange={(event) => {
+              setMessageTxt(event.target.value)
             }}
-          >
-            <Stack
-              spacing={1}
-              direction="column"
-            >
-              {
-                messages.map((message) => <MessageTile
-                  authenticatedUser={authenticatedUser}
-                  key={message.messageId}
-                  message={message}
-                />)
-              }
-            </Stack>
-          </div>
-          {
-            selectedConversation !== null &&
-            <TextField
-              value={messageTxt}
-              onChange={(event) => {
-                setMessageTxt(event.target.value)
-              }}
-              style={{
-                marginTop: 5,
-              }}
-              label={"Send Message"}
-              variant={"filled"}
-              InputProps={{
-                endAdornment: <InputAdornment position="end">
-                  <IconButton
-                    onClick={sendMessage}
-                    color={"primary"}
-                  >
-                    <Send/>
-                  </IconButton>
-                </InputAdornment>
-              }}
-              fullWidth
-            />
-          }
-        </Stack>
+            style={{
+              marginTop: 5,
+            }}
+            label={"Send Message"}
+            variant={"filled"}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">
+                <IconButton
+                  onClick={sendMessage}
+                  color={"primary"}
+                >
+                  <Send/>
+                </IconButton>
+              </InputAdornment>
+            }}
+            fullWidth
+          />
+        }
       </Grid>
     </Grid>
   )

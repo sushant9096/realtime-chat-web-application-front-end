@@ -1,5 +1,5 @@
 .App {
-
+    height: 100%;
 }
 .scrollbar1::-webkit-scrollbar {
     width: 5px;

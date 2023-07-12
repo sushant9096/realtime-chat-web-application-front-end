@@ -9,14 +9,16 @@ import {Box, Grid, Paper, Typography} from "@mui/material";
 import ChatHome from "./components/ChatHome/ChatHome";
 import api, {api_url} from "./config/api";
 import catchAsyncAPI from "./utils/catchAsyncAPI";
-import io from "socket.io-client";
+import {io} from "socket.io-client";
+
+let socket = undefined;
+let count = 0;
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [firebaseUID, setFirebaseUID] = useState('');
   const [authenticatedUser, setAuthenticatedUser] = useState('');
-  const firstAPICall = useRef(false);
-  const socket = useRef(null);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   function getAuthenticatedUserByFirebaseUID(firebaseUID) {
     return new Promise(resolve => {
@@ -26,7 +28,7 @@ function App() {
       catchAsyncAPI(
         api(requestConfig),
         (response) => {
-          if(response.data) {
+          if (response.data) {
             resolve(response.data)
           }
         },
@@ -38,45 +40,69 @@ function App() {
   }
 
   useEffect(() => {
-    if (!firstAPICall.current) {
-      console.log('firstAPICall')
-      firstAPICall.current = true;
-      onAuthStateChanged(firebaseAuth, async (user) => {
-        console.log('onAuthStateChanged')
-        if (user) {
-          // User is signed in, see docs for a list of available properties
-          // https://firebase.google.com/docs/reference/js/auth.user
-          setFirebaseUID(user.uid);
-          user.getIdToken(true).then(async (idToken) => {
-            api.interceptors.request.use(function (config) {
-              const token = idToken;
-              config.headers.Authorization =  token ? `Bearer ${token}` : '';
-              return config;
-            });
-            if (socket.current === null) {
-              console.error('socket.current === null')
-              socket.current = io(api_url, {
-                auth: {
-                  token: idToken
-                }
-              });
-              socket.current.on('connected', async () => {
-                const authUserProfile = await getAuthenticatedUserByFirebaseUID(user.uid);
-                setAuthenticatedUser(authUserProfile);
-                setAuthenticated(true);
-              });
-            }
-          }).catch((error) => {
-            console.log(error)
-          });
-        } else {
-          setAuthenticated(false)
-        }
-        return false;
-      });
-
-    }
+    console.log('First Render');
+    const unsubscribeFirebaseAuthListener =  onAuthStateChanged(firebaseAuth, (user) => {
+      console.log('onAuthStateChanged')
+      if (user) {
+        // User is signed in, see docs for a list of available properties
+        // https://firebase.google.com/docs/reference/js/auth.user
+        setFirebaseUID(user.uid);
+      }
+      return false;
+    });
+    return () => {
+      console.log('Unmounting: First Render');
+      socket && socket.removeAllListeners() && socket.disconnect();
+      socket = undefined;
+      unsubscribeFirebaseAuthListener();
+    };
   }, []);
+
+  useEffect(() => {
+    const user = firebaseAuth.currentUser;
+
+    async function onConnect() {
+      const authUserProfile = await getAuthenticatedUserByFirebaseUID(user.uid);
+      setAuthenticatedUser(authUserProfile);
+      setAuthenticated(true);
+      setSocketConnected(true);
+    }
+
+    function onDisconnect() {
+      setSocketConnected(false);
+    }
+
+    if (user) {
+      // console.log('Logged user: ', user);
+      user.getIdToken(true).then(async (idToken) => {
+        api.interceptors.request.use(function (config) {
+          const token = idToken;
+          config.headers.Authorization = token ? `Bearer ${token}` : '';
+          return config;
+        });
+        socket = io(api_url,{
+          autoConnect: false,
+          auth: {
+            token: idToken
+          }
+        });
+        socket.connect();
+        socket.on('connect', onConnect);
+        socket.on('disconnect', onDisconnect);
+      }).catch((error) => {
+        console.log(error)
+      });
+    }
+
+    return () => {
+      console.log('Unmounting')
+      if (socket) {
+        console.log('socket', socket)
+        socket.off('connect', onConnect);
+        socket.off('disconnect', onDisconnect);
+      }
+    }
+  }, [firebaseUID]);
 
   function loadFirebaseUI() {
     // Initialize the FirebaseUI Widget using Firebase.
@@ -123,59 +149,45 @@ function App() {
   }
 
   return (
-    <Grid
-      container
-      className="App"
-      direction={"column"}
-      style={{height: '100%'}}
-    >
-      <Grid
-        item
-      >
-        <MuiAppBar
-          signOutUser={signOutUser}
-          authenticated={authenticated}
-        />
-      </Grid>
-      <Grid
-        item
-        style={{flexGrow: 1}}
-      >
-        {
-          authenticated ?
-            <ChatHome
-              socket={socket.current}
-              firebaseUID={firebaseUID}
-              authenticatedUser={authenticatedUser}
-            />
-            :
-            <Box
-              display={'flex'}
-              maxWidth={500}
-              mx={'auto'}
-              mt={10}
-              flexDirection={'column'}
+    <div className={"App"}>
+      <MuiAppBar
+        signOutUser={signOutUser}
+        authenticated={authenticated}
+      />
+      {
+        authenticated ?
+          <ChatHome
+            socket={socket}
+            firebaseUID={firebaseUID}
+            authenticatedUser={authenticatedUser}
+          />
+          :
+          <Box
+            display={'flex'}
+            maxWidth={500}
+            mx={'auto'}
+            mt={10}
+            flexDirection={'column'}
+          >
+            <Paper
+              elevation={24}
+              style={{flexGrow: 1, background: 'transparent'}}
             >
-              <Paper
-                elevation={24}
-                style={{flexGrow: 1, background: 'transparent'}}
+              <Typography
+                color={"darkblue"}
+                variant="subtitle1"
+                textAlign={"center"}
+                style={{fontWeight: 900}}
+                p={5}
               >
-                <Typography
-                  color={"darkblue"}
-                  variant="subtitle1"
-                  textAlign={"center"}
-                  style={{fontWeight: 900}}
-                  p={5}
-                >
-                  Experience the thrill of instant connections:<br/>
-                  Join our real-time chat community with just a click of 'Continue with Google'
-                </Typography>
-                <FirebaseUIContainer />
-              </Paper>
-            </Box>
-        }
-      </Grid>
-    </Grid>
+                Experience the thrill of instant connections:<br/>
+                Join our real-time chat community with just a click of 'Continue with Google'
+              </Typography>
+              <FirebaseUIContainer/>
+            </Paper>
+          </Box>
+      }
+    </div>
   );
 }
 

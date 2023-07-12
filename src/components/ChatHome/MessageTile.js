@@ -16,7 +16,7 @@ function MessageTile({message, authenticatedUser}) {
   return (
     <Paper
       variant={"elevation"}
-      elevation={0.5}
+      elevation={0}
       style={{
         alignSelf: senderId === authenticatedUser?.userId ? 'flex-end' : 'flex-start',
         width: '40%',
