@@ -10,6 +10,8 @@ import ChatHome from "./components/ChatHome/ChatHome";
 import api, {api_url} from "./config/api";
 import catchAsyncAPI from "./utils/catchAsyncAPI";
 import {io} from "socket.io-client";
+import AppDialog from "./components/ChatHome/AppDialog";
+import PrivacyPolicy from "./components/ChatHome/PrivacyPolicy";
 
 let socket = undefined;
 let count = 0;
@@ -19,6 +21,12 @@ function App() {
   const [firebaseUID, setFirebaseUID] = useState('');
   const [authenticatedUser, setAuthenticatedUser] = useState('');
   const [socketConnected, setSocketConnected] = useState(false);
+
+  // Dialog States
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogDescription, setDialogDescription] = useState('');
+  const [dialogComponent, setDialogComponent] = useState(undefined);
 
   function getAuthenticatedUserByFirebaseUID(firebaseUID) {
     return new Promise(resolve => {
@@ -41,7 +49,7 @@ function App() {
 
   useEffect(() => {
     console.log('First Render');
-    const unsubscribeFirebaseAuthListener =  onAuthStateChanged(firebaseAuth, (user) => {
+    const unsubscribeFirebaseAuthListener = onAuthStateChanged(firebaseAuth, (user) => {
       console.log('onAuthStateChanged')
       if (user) {
         // User is signed in, see docs for a list of available properties
@@ -80,7 +88,7 @@ function App() {
           config.headers.Authorization = token ? `Bearer ${token}` : '';
           return config;
         });
-        socket = io(api_url,{
+        socket = io(api_url, {
           autoConnect: false,
           auth: {
             token: idToken
@@ -148,6 +156,13 @@ function App() {
     )
   }
 
+  const handlePrivacyPolicyClick = () => {
+    setDialogTitle('Privacy Policy / Terms and Conditions');
+    // setDialogDescription('This is a demo project. No privacy policy or terms and conditions are applicable.');
+    setDialogComponent(<PrivacyPolicy/>);
+    setDialogOpen(true);
+  }
+
   return (
     <div className={"App"}>
       <MuiAppBar
@@ -187,6 +202,35 @@ function App() {
             </Paper>
           </Box>
       }
+      <Typography
+        color={"black"}
+        width={'100%'}
+        variant="caption"
+        textAlign={"center"}
+        style={{
+          fontWeight: 900,
+          cursor: 'pointer',
+          // align at bottom of the page
+          position: 'fixed',
+          bottom: 0,
+        }}
+        p={5}
+        onClick={handlePrivacyPolicyClick}
+      >
+        Privacy Policy / Terms and Conditions
+      </Typography>
+      <AppDialog
+        open={dialogOpen}
+        title={dialogTitle}
+        description={dialogDescription}
+        component={dialogComponent}
+        onClose={() => {
+          setDialogOpen(false);
+          setDialogTitle('');
+          setDialogDescription('');
+          setDialogComponent(undefined);
+        }}
+      />
     </div>
   );
 }
