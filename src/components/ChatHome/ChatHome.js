@@ -51,7 +51,7 @@ function ChatHome(props) {
   }
 
   const updateSearchResults = (results) => {
-    console.log('upSearchResults');
+    // console.log('upSearchResults');
     setConversionSearchResults(prevState => {
       prevState = [...results];
       return prevState;
@@ -175,8 +175,8 @@ function ChatHome(props) {
         api(requestConfig),
         response => {
           if (Array?.isArray(response?.data)) {
-            console.log(response?.data)
-            console.log(authenticatedUser?.userId)
+            // console.log(response?.data)
+            // console.log(authenticatedUser?.userId)
             updateSearchResults(response?.data?.filter(user => user?.userId !== authenticatedUser?.userId))
           }
         },
@@ -192,13 +192,13 @@ function ChatHome(props) {
       console.log('connecting to conversation [socket]: ', conversations[selectedConversation].conversationId)
       socket.emit('join chat', conversations[selectedConversation].conversationId)
       socket.on('message received', (message) => {
-        console.log('message received:\n', message)
+        // console.log('message received:\n', message)
         setMessages(prevState => {
           // console.log('prevState:\n', prevState)
           if (!prevState || prevState.length === 0) {
             prevState = [message];
           } else if (!prevState.includes(message)) {
-            console.log('new message')
+            // console.log('new message')
             prevState = [...prevState, message];
           }
           return prevState;
@@ -210,7 +210,7 @@ function ChatHome(props) {
       catchAsyncAPI(
         api(requestConfig),
         response => {
-          console.log('messages:\n', response.data)
+          // console.log('messages:\n', response.data)
           if (response.data && Array.isArray(response.data)) {
             setMessages(response.data)
           }
