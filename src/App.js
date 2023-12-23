@@ -5,7 +5,7 @@ import {useEffect, useRef, useState} from "react";
 import {auth as FirebaseUIAuth} from "firebaseui";
 import {firebaseAuth} from "./config/firebase";
 import {GoogleAuthProvider, onAuthStateChanged} from "firebase/auth";
-import {Box, Grid, Paper, Typography} from "@mui/material";
+import {Box, Grid, Paper, Stack, Typography} from "@mui/material";
 import ChatHome from "./components/ChatHome/ChatHome";
 import api, {api_url} from "./config/api";
 import catchAsyncAPI from "./utils/catchAsyncAPI";
@@ -63,6 +63,7 @@ function App() {
       socket && socket.removeAllListeners() && socket.disconnect();
       socket = undefined;
       unsubscribeFirebaseAuthListener();
+      return false;
     };
   }, []);
 
@@ -133,6 +134,7 @@ function App() {
     firebaseAuth.signOut()
       .then(() => {
         console.log('Signed out successfully')
+        window.location.reload();
       })
       .catch((error) => {
         console.log(error)
@@ -164,7 +166,7 @@ function App() {
   }
 
   return (
-    <div className={"App"}>
+    <Stack direction={"column"} className={"App"}>
       <MuiAppBar
         signOutUser={signOutUser}
         authenticated={authenticated}
@@ -177,48 +179,51 @@ function App() {
             authenticatedUser={authenticatedUser}
           />
           :
-          <Box
-            display={'flex'}
-            maxWidth={500}
-            mx={'auto'}
-            mt={10}
-            flexDirection={'column'}
-          >
-            <Paper
-              elevation={24}
-              style={{flexGrow: 1, background: 'transparent'}}
+          <>
+            <Box
+              display={'flex'}
+              maxWidth={500}
+              mx={'auto'}
+              mt={10}
+              flexDirection={'column'}
             >
-              <Typography
-                color={"darkblue"}
-                variant="subtitle1"
-                textAlign={"center"}
-                style={{fontWeight: 900}}
-                p={5}
+              <Paper
+                elevation={24}
+                style={{flexGrow: 1, background: 'transparent'}}
               >
-                Experience the thrill of instant connections:<br/>
-                Join our real-time chat community with just a click of 'Continue with Google'
-              </Typography>
-              <FirebaseUIContainer/>
-            </Paper>
-          </Box>
+                <Typography
+                  color={"darkblue"}
+                  variant="subtitle1"
+                  textAlign={"center"}
+                  style={{fontWeight: 900}}
+                  p={5}
+                >
+                  Experience the thrill of instant connections:<br/>
+                  Join our real-time chat community with just a click of 'Continue with Google'
+                </Typography>
+                <FirebaseUIContainer/>
+              </Paper>
+            </Box>
+            <Typography
+              color={"black"}
+              width={'100%'}
+              variant="caption"
+              textAlign={"center"}
+              style={{
+                fontWeight: 900,
+                cursor: 'pointer',
+                // align at bottom of the page
+                position: 'fixed',
+                bottom: 0,
+              }}
+              p={5}
+              onClick={handlePrivacyPolicyClick}
+            >
+              Privacy Policy / Terms and Conditions
+            </Typography>
+          </>
       }
-      <Typography
-        color={"black"}
-        width={'100%'}
-        variant="caption"
-        textAlign={"center"}
-        style={{
-          fontWeight: 900,
-          cursor: 'pointer',
-          // align at bottom of the page
-          position: 'fixed',
-          bottom: 0,
-        }}
-        p={5}
-        onClick={handlePrivacyPolicyClick}
-      >
-        Privacy Policy / Terms and Conditions
-      </Typography>
+
       <AppDialog
         open={dialogOpen}
         title={dialogTitle}
@@ -231,7 +236,7 @@ function App() {
           setDialogComponent(undefined);
         }}
       />
-    </div>
+    </Stack>
   );
 }
 
